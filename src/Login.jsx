@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import './Login.css';
 
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://wglrckiaxcztqvqccnxl.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_41h96FI0K1HrKow3Rr1p1A_bMksXurh";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function Login({ onLoginSuccess }) {
