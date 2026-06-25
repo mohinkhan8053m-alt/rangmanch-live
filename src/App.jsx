@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Login from './Login';
 import VideoCall from './VideoCall';
-import './App.css'; // अगर आपकी कोई बेसिक स्टाइलिंग फाइल है
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -26,4 +25,3 @@ export default function App() {
     </div>
   );
 }
-
