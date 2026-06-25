@@ -1,0 +1,131 @@
+.video-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #1e272e;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: #05c46b;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-profile img {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+}
+
+.logout-btn {
+  background: #ff5e57;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.video-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column; /* मोबाइल पर ऊपर-नीचे वीडियो दिखेंगे */
+  gap: 10px;
+  padding: 10px;
+}
+
+@media (min-width: 768px) {
+  .video-grid {
+    flex-direction: row; /* कंप्यूटर पर अगल-बगल दिखेंगे */
+  }
+}
+
+.video-box {
+  flex: 1;
+  background: #2f3542;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.status-message {
+  font-size: 1.1rem;
+  color: #a4b0be;
+  text-align: center;
+  padding: 20px;
+}
+
+.ai-translation-bar {
+  background: #3c6382;
+  padding: 12px;
+  text-align: center;
+  font-size: 1rem;
+  border-top: 2px solid #0a3d62;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 15px;
+  background: #2f3542;
+}
+
+.btn {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  width: 45%;
+  max-width: 200px;
+}
+
+.start-btn { background: #05c46b; color: white; width: 80%; max-width: 300px; }
+.cut-btn { background: #ff5e57; color: white; }
+.next-btn { background: #ffa801; color: white; }
+
+.ad-container {
+  height: 60px;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid #333;
+}
+
+.ad-text {
+  font-size: 0.8rem;
+  color: #57606f;
+}
+
