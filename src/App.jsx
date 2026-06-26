@@ -13,32 +13,34 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. सीधे सत्र (Session) चेक करें
+    // 1. पेज लोड होते ही सत्र चेक करें
     const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user || null);
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
       setLoading(false);
     };
 
     checkUser();
 
-    // 2. तुरंत अपडेट के लिए
+    // 2. ऑथेंटिकेशन बदलने पर तुरंत रिस्पॉन्स
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // सफेद पन्ने के बजाय, अगर लोडिंग हो तो यहाँ कोई छोटा सा 'Spinner' या बस खाली रहने दें
+  // लोडिंग के दौरान कुछ न दिखाएं
   if (loading) return null; 
 
+  // मुख्य बदलाव: अगर user नहीं है, तो पक्का सिर्फ Login पेज ही दिखेगा
   return (
     <div className="main-app">
-      {!user ? (
-        <Login />
-      ) : (
+      {user ? (
         <VideoCall user={user} onLogout={() => setUser(null)} />
+      ) : (
+        <Login />
       )}
     </div>
   );
