@@ -1,4 +1,4 @@
-/* Google Fonts से Cursive/Handwriting फॉन्ट लाना जो 'Rang Manch' जैसा दिखेगा */
+/* Google Fonts से प्रीमियम 'Great Vibes' फॉन्ट */
 @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@400;600&display=swap');
 
 .login-container {
@@ -6,7 +6,7 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: #f1f2f6; /* आपके स्क्रीनशॉट की तरह साफ़-सुथरा बैकग्राउंड */
+  background: #f1f2f6; 
   font-family: 'Poppins', sans-serif;
   padding: 20px;
 }
@@ -22,11 +22,11 @@
   border: 1px solid #e1e8ed;
 }
 
-/* बिल्कुल 'Rang Manch' जैसी कर्सिव स्टाइल */
+/* 🌟 आपका प्रीमियम कर्सिव लोगो स्टाइल */
 .cursive-logo {
   font-family: 'Great Vibes', cursive;
-  font-size: 3.5rem; /* बड़ा और अट्रैक्टिव */
-  color: #1e272e;    /* क्लासिक ब्लैक/डार्क शेड */
+  font-size: 3.5rem; 
+  color: #1e272e;    
   margin-bottom: 5px;
   font-weight: 500;
 }
