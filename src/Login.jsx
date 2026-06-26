@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import './Login.css';
 
-// 🔑 आपकी Supabase चाबियां यहाँ सुरक्षित रूप से फिट कर दी गई हैं
+// 🔑 आपकी दोनों चाबियां यहाँ फिट कर दी गई हैं
 const supabase = createClient(
   "https://wglrckiaxcztqvqccnxl.supabase.co", 
   "sb_publishable_41h96FI0K1HrKow3Rr1p1A_bMksXurh"
@@ -13,20 +13,22 @@ export default function Login({ onLoginSuccess }) {
   const [userCountry, setUserCountry] = useState('Detecting...');
   const [detectedLang, setDetectedLang] = useState('en');
 
+  // फीचर: ऑटोमेटिक कंट्री/लोकेशन डिटेक्शन
   useEffect(() => {
-    // लोकेशन और भाषा का ऑटो-डिटेक्शन
     fetch('https://ipapi.co/json/')
       .then((res) => res.json())
       .then((data) => {
         setUserCountry(data.country_name || 'Unknown');
+        // फीचर: इंडिया के लिए हिंदी, बाकी के लिए इंग्लिश
         setDetectedLang(data.country_code === 'IN' ? 'hi' : 'en');
       })
       .catch((err) => {
-        console.error("Country detection failed:", err);
+        console.error("Location detection failed:", err);
         setUserCountry('Global');
       });
   }, []);
 
+  // फीचर: Google लॉगिन
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
@@ -44,9 +46,11 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div className="login-container">
       <div className="login-card">
+        {/* फीचर: प्रीमियम ब्रांडिंग */}
         <h1 className="premium-logo">Rang Manch</h1>
         <p className="tagline">दुनियाभर के अनजान लोगों से अपनी भाषा में बात करें</p>
         
+        {/* फीचर: कंट्री बैज */}
         <div className="country-badge">
           📍 आपकी लोकेशन: <strong>{userCountry}</strong> ({detectedLang === 'hi' ? 'Hindi Mode' : 'English Mode'})
         </div>
