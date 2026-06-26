@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import './Login.css';
 
-// 🔑 आपकी चाबियाँ सुरक्षित हैं
+// 🔑 चाबियाँ अब Vercel Environment Variables से आएंगी
 const supabase = createClient(
-  "https://wglrckiaxcztqvqccnxl.supabase.co", 
-  "sb_publishable_41h96FI0K1HrKow3Rr1p1A_bMksXurh"
+  import.meta.env.VITE_SUPABASE_URL, 
+  import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
 export default function Login({ onLoginSuccess }) {
@@ -26,15 +26,14 @@ export default function Login({ onLoginSuccess }) {
       });
   }, []);
 
-  // फीचर: Google लॉगिन (यहाँ बदलाव किया है)
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { 
-          // अब यह सीधा आपकी लाइव वेबसाइट पर जाएगा
-          redirectTo: 'https://rangmanch-live.vercel.app/auth/v1/callback' 
+          // 404 एरर से बचने के लिए सही पाथ
+          redirectTo: 'https://rangmanch-live.vercel.app/' 
         }
       });
       if (error) throw error;
