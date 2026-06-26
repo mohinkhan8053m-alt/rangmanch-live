@@ -7,8 +7,8 @@ export default function VideoCall({ user, onLogout }) {
   const [partnerInfo, setPartnerInfo] = useState(null);
   const [translatedText, setTranslatedText] = useState('');
 
-  // Vercel से आपकी API Key को यहाँ एक्सेस करेंगे
-  const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+  // 🔑 Vercel से Gemini API Key उठाने का सही तरीका
+  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
   const localVideoRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -33,12 +33,16 @@ export default function VideoCall({ user, onLogout }) {
     if (SpeechRecognition) {
       const rec = new SpeechRecognition();
       rec.continuous = true;
-      rec.lang = 'hi-IN'; // अपनी जरूरत के अनुसार बदलें
+      rec.lang = 'hi-IN';
 
       rec.onresult = (event) => {
         const transcript = event.results[event.results.length - 1][0].transcript;
-        // यहाँ API Key का इस्तेमाल करके Gemini से अनुवाद कर सकते हैं
-        console.log("Gemini API Key Check:", GEMINI_API_KEY ? "Loaded" : "Missing");
+        
+        // यहाँ Gemini API का इस्तेमाल होगा
+        if (!GEMINI_API_KEY) {
+          console.error("Gemini API Key missing! Vercel में चेक करें।");
+        }
+        
         translateAndSpeak(transcript);
       };
       recognitionRef.current = rec;
@@ -46,7 +50,7 @@ export default function VideoCall({ user, onLogout }) {
   };
 
   const translateAndSpeak = (text) => {
-    // यहाँ अपना अनुवाद लॉजिक रखें
+    // आप यहाँ Gemini API की कॉल लगा सकते हैं
     const fakeTranslation = "अनुवादित: " + text;
     setTranslatedText(fakeTranslation);
     const utterance = new SpeechSynthesisUtterance(fakeTranslation);
@@ -57,7 +61,6 @@ export default function VideoCall({ user, onLogout }) {
     setSearching(true);
     setConnected(false);
     
-    // नकली कॉल कनेक्शन (सिमुलेशन)
     setTimeout(() => {
       setSearching(false);
       setConnected(true);
@@ -68,15 +71,13 @@ export default function VideoCall({ user, onLogout }) {
 
   return (
     <div className="video-container">
-      {/* टॉप बार */}
       <div className="top-bar">
         <div className="user-profile">
-          <span>{user.name}</span>
+          <span>{user?.name || "User"}</span>
         </div>
         <button className="logout-btn" onClick={onLogout}>लॉगआउट</button>
       </div>
 
-      {/* वीडियो बॉक्स */}
       <div className="video-grid">
         <video ref={localVideoRef} autoPlay playsInline muted className="video-box" />
         <div className="video-box remote-box">
@@ -84,14 +85,12 @@ export default function VideoCall({ user, onLogout }) {
         </div>
       </div>
 
-      {/* ट्रांसलेशन बार */}
       {connected && (
         <div className="ai-translation-bar">
           🤖 AI ट्रांसलेशन: <strong>{translatedText}</strong>
         </div>
       )}
 
-      {/* कंट्रोल्स */}
       <div className="controls">
         {!connected && !searching ? (
           <button className="btn start-btn" onClick={handleNextCall}>START CHAT</button>
