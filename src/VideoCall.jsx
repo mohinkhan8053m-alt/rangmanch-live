@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI } from "@google/genai"; // 1. असली Gemini AI पैकेज जोड़ा
+import { GoogleGenAI } from "@google/genai";
 import './VideoCall.css';
 
-// 🔑 चाबी का सटीक रास्ता: नीचे दी गई लाइन में जो 'यहाँ_अपनी_असली_चाबी_पेस्ट_करें' लिखा है, 
-// बस उसे हटाकर अपनी वो मास्टर चाबी (API Key) उद्धरण चिह्नों "" के अंदर पेस्ट कर देना भाई!
-const genAI = new GoogleGenAI({ apiKey: "यहाँ_अपनी_असली_चाबी_पेस्ट_करें" });
+// 🔑 Gemini API Key को अब हम Vercel के एनवायरनमेंट वेरिएबल्स से लेंगे
+const genAI = new GoogleGenAI({ apiKey: process.env.REACT_APP_GEMINI_KEY });
 
 export default function VideoCall({ user, onLogout }) {
   const [searching, setSearching] = useState(false);
@@ -16,30 +15,25 @@ export default function VideoCall({ user, onLogout }) {
   const remoteVideoRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  // 1. कैमरा और माइक चालू करना
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((stream) => {
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-        // AI मॉडरेशन बैकग्राउंड में कैमरे को चेक करेगा (सुरक्षित रखा है)
         startAIModem(stream);
       })
       .catch((err) => console.error("कैमरा एक्सेस नहीं मिला:", err));
 
-    // AI वॉइस ट्रांसलेशन इंजन शुरू करना
     setupAIVoiceTranslator();
 
     return () => {
       if (recognitionRef.current) recognitionRef.current.stop();
     };
-  }, []);
+  }, [user.language]); // भाषा बदलते ही री-सेटअप होगा
 
-  // 2. AI गंदगी रोकने वाला सिस्टम (सुरक्षित रखा है)
   const startAIModem = (stream) => {
     console.log("AI Moderation Active: स्कैनिंग चालू है...");
   };
 
-  // 3. AI वॉइस ट्रांसलेटर सेटअप
   const setupAIVoiceTranslator = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -50,9 +44,6 @@ export default function VideoCall({ user, onLogout }) {
 
       rec.onresult = (event) => {
         const lastResult = event.results[event.results.length - 1][0].transcript;
-        console.log("सामने वाले ने बोला:", lastResult);
-        
-        // अब यहाँ असली ट्रांसलेशन कॉल होगा
         translateAndSpeak(lastResult);
       };
 
@@ -60,7 +51,6 @@ export default function VideoCall({ user, onLogout }) {
     }
   };
 
-  // 4. आवाज को Gemini AI से असली ट्रांसलेशन करवाकर बोलना (अपडेटेड)
   const translateAndSpeak = async (text) => {
     try {
       const targetLanguage = user.language === 'hi' ? 'Hindi' : 'English';
@@ -72,7 +62,6 @@ export default function VideoCall({ user, onLogout }) {
 
       setTranslatedText(cleanTranslation);
 
-      // फोन का इन-बिल्ट वॉइस जनरेटर इसे बोलकर सुनाएगा
       const utterance = new SpeechSynthesisUtterance(cleanTranslation);
       utterance.lang = user.language; 
       window.speechSynthesis.speak(utterance);
@@ -83,7 +72,6 @@ export default function VideoCall({ user, onLogout }) {
     }
   };
 
-  // 5. 'Start / Next' बटन का फंक्शन
   const handleNextCall = () => {
     setSearching(true);
     setConnected(false);
@@ -100,7 +88,6 @@ export default function VideoCall({ user, onLogout }) {
     }, 2000);
   };
 
-  // 6. कॉल कट करने का फंक्शन
   const handleCutCall = () => {
     setConnected(false);
     setSearching(false);
@@ -109,7 +96,6 @@ export default function VideoCall({ user, onLogout }) {
 
   return (
     <div className="video-container">
-      {/* टॉप बार - यूजर प्रोफाइल */}
       <div className="top-bar">
         <div className="user-profile">
           <img src={user.photo} alt="Avatar" />
@@ -118,7 +104,6 @@ export default function VideoCall({ user, onLogout }) {
         <button className="logout-btn" onClick={onLogout}>लॉगआउट</button>
       </div>
 
-      {/* वीडियो ग्रिड */}
       <div className="video-grid">
         <div className="video-box local-box">
           <video ref={localVideoRef} autoPlay playsInline muted />
@@ -139,14 +124,12 @@ export default function VideoCall({ user, onLogout }) {
         </div>
       </div>
 
-      {/* AI लाइव ट्रांसलेशन बार */}
       {connected && (
         <div className="ai-translation-bar">
           🤖 AI अनुवाद: <strong>{translatedText || "सामने वाले के बोलने का इंतजार करें..."}</strong>
         </div>
       )}
 
-      {/* 🔘 बड़े कंट्रोल्स बटन्स (बड़े और साफ़ दिखने वाले स्टाइल के साथ) */}
       <div className="controls" style={{ padding: '20px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
         {!connected && !searching ? (
           <button 
@@ -176,7 +159,6 @@ export default function VideoCall({ user, onLogout }) {
         )}
       </div>
 
-      {/* Google AdSense के लिए कंट्री-वाइज विज्ञापन का डिब्बा (सुरक्षित रखा है) */}
       <div className="ad-container">
         <span className="ad-text">Google Ads ({user.country} के हिसाब से विज्ञापनों की जगह)</span>
       </div>
