@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import './Login.css';
 
-// 🔑 वर्सेल (Vercel) से चाबियां लेने का सुरक्षित तरीका
+// 🔑 आपकी Supabase चाबियां यहाँ सुरक्षित रूप से फिट कर दी गई हैं
 const supabase = createClient(
-  process.env.REACT_APP_SUPABASE_URL, 
-  process.env.REACT_APP_SUPABASE_ANON_KEY
+  "https://wglrckiaxcztqvqccnxl.supabase.co", 
+  "sb_publishable_41h96FI0K1HrKow3Rr1p1A_bMksXurh"
 );
 
 export default function Login({ onLoginSuccess }) {
@@ -14,6 +14,7 @@ export default function Login({ onLoginSuccess }) {
   const [detectedLang, setDetectedLang] = useState('en');
 
   useEffect(() => {
+    // लोकेशन और भाषा का ऑटो-डिटेक्शन
     fetch('https://ipapi.co/json/')
       .then((res) => res.json())
       .then((data) => {
@@ -43,7 +44,6 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div className="login-container">
       <div className="login-card">
-        {/* 🌟 यहाँ आपका प्रीमियम 'रंगमंच' नाम चमकेगा */}
         <h1 className="premium-logo">Rang Manch</h1>
         <p className="tagline">दुनियाभर के अनजान लोगों से अपनी भाषा में बात करें</p>
         
