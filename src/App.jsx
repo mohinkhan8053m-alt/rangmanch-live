@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import Login from './Login';
 import VideoCall from './VideoCall';
 
-// Supabase क्लाइंट सेटअप
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL, 
   import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -11,31 +10,29 @@ const supabase = createClient(
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // यह सुनिश्चित करेगा कि पहले चेक हो
 
   useEffect(() => {
-    // 1. पेज लोड होते ही चेक करें कि क्या यूजर पहले से लॉग इन है?
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUser(session.user);
-      }
+      setUser(session?.user || null);
+      setLoading(false); // चेक पूरा होते ही लोडिंग बंद
     });
 
-    // 2. लॉगिन/लॉगआउट होने पर ऑटोमैटिक अपडेट करें
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session ? session.user : null);
+      setUser(session?.user || null);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
+  // जब तक चेक चल रहा है, तब तक खाली या 'Loading...' दिखाएं
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="main-app">
-      {/* अगर user है तो VideoCall दिखाओ, नहीं तो Login */}
       {!user ? (
         <Login />
       ) : (
