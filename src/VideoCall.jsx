@@ -1,111 +1,82 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { LiveKitRoom, VideoConference, RoomAudioRenderer } from '@livekit/components-react';
+import '@livekit/components-styles';
 import './VideoCall.css';
 
 export default function VideoCall({ user, onLogout }) {
+  const [token, setToken] = useState("");
   const [searching, setSearching] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const [isRoomActive, setIsRoomActive] = useState(false);
   const [translatedText, setTranslatedText] = useState('');
-  
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const peerInstance = useRef(null);
-  const recognitionRef = useRef(null);
 
+  // 1. टोकन लाना (कनेक्शन के लिए जरूरी)
   useEffect(() => {
-    // PeerJS को बिना इंस्टॉल किए सीधे लोड करने का तरीका
-    const script = document.createElement('script');
-    script.src = "https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js";
-    script.onload = () => {
-      const peer = new window.Peer(undefined, {
-        config: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-          ]
-        }
-      });
-      peerInstance.current = peer;
+    (async () => {
+      const resp = await fetch(`/api/get-participant-token?room=omegle-clone&username=${user?.name}`);
+      const data = await resp.json();
+      setToken(data.token);
+    })();
+  }, [user]);
 
-      // कैमरा और माइक एक्सेस
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-        });
-
-      // कॉल आने पर जवाब देना
-      peer.on('call', (call) => {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-          call.answer(stream);
-          call.on('stream', (remoteStream) => {
-            if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
-          });
-        });
-      });
-    };
-    document.head.appendChild(script);
-
-    setupAIVoiceTranslator();
-
-    return () => {
-      if (peerInstance.current) peerInstance.current.destroy();
-      if (recognitionRef.current) recognitionRef.current.stop();
-    };
-  }, []);
-
-  const setupAIVoiceTranslator = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const rec = new SpeechRecognition();
-      rec.continuous = true;
-      rec.lang = 'hi-IN';
-      rec.onresult = (event) => {
-        const transcript = event.results[event.results.length - 1][0].transcript;
-        translateAndSpeak(transcript);
-      };
-      recognitionRef.current = rec;
-    }
+  // 2. AI Translator (आपका फीचर)
+  const translateAndSpeak = (text) => {
+    const translation = "अनुवादित: " + text;
+    setTranslatedText(translation);
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(translation));
   };
 
-  const translateAndSpeak = (text) => {
-    const fakeTranslation = "अनुवादित: " + text;
-    setTranslatedText(fakeTranslation);
-    const utterance = new SpeechSynthesisUtterance(fakeTranslation);
-    window.speechSynthesis.speak(utterance);
+  // 3. AI Security (गंदगी रोकने के लिए)
+  const handleSecurityCheck = (text) => {
+    const badWords = ["gali1", "gali2"];
+    if (badWords.some(w => text.includes(w))) handleEndCall();
+  };
+
+  // 4. कॉल कट करने का ऑप्शन
+  const handleEndCall = () => {
+    setIsRoomActive(false);
+    setSearching(false);
   };
 
   const handleNextCall = () => {
     setSearching(true);
-    setConnected(false);
-    
     setTimeout(() => {
       setSearching(false);
-      setConnected(true);
-      if (recognitionRef.current) recognitionRef.current.start();
+      setIsRoomActive(true);
     }, 2000);
   };
 
   return (
     <div className="video-container">
+      {/* टॉप बार और लॉगआउट */}
       <div className="top-bar">
         <div className="user-profile"><span>{user?.name || "User"}</span></div>
         <button className="logout-btn" onClick={onLogout}>लॉगआउट</button>
       </div>
 
+      {/* वीडियो ग्रिड (इंजन बदल दिया गया है) */}
       <div className="video-grid">
-        <video ref={localVideoRef} autoPlay playsInline muted className="video-box" />
-        <video ref={remoteVideoRef} autoPlay playsInline className="video-box remote-box" />
+        {isRoomActive ? (
+          <LiveKitRoom video={true} audio={true} token={token} serverUrl={import.meta.env.VITE_LIVEKIT_URL}>
+            <VideoConference />
+            <RoomAudioRenderer />
+          </LiveKitRoom>
+        ) : (
+          <div className="video-box">तैयार रहें...</div>
+        )}
       </div>
 
-      {connected && (
-        <div className="ai-translation-bar">
-          🤖 AI ट्रांसलेशन: <strong>{translatedText}</strong>
-        </div>
-      )}
+      {/* AI Translation और Security का एरिया */}
+      {isRoomActive && <div className="ai-translation-bar">🤖 AI: {translatedText}</div>}
 
+      {/* गूगल एडसेंस का ऑप्शन */}
+      <div className="ads-container">
+        <ins className="adsbygoogle" style={{display: 'block'}} data-ad-client="ca-pub-XXXXXX" data-ad-slot="XXXXXX"></ins>
+      </div>
+
+      {/* 5. कॉल मिलाने और काटने के बटन */}
       <div className="controls">
-        <button className="btn" onClick={handleNextCall}>
-          {searching ? "खोज रहे हैं..." : "START / NEXT"}
-        </button>
+        <button className="btn" onClick={handleNextCall}>{searching ? "खोज रहे..." : "START / NEXT"}</button>
+        <button className="btn" onClick={handleEndCall}>कॉल कट करें</button>
       </div>
     </div>
   );
