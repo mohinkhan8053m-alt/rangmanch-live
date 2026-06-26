@@ -1,76 +1,103 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import './VideoCall.css';
-
-// 🔑 Vercel के एनवायरनमेंट वेरिएबल्स से चाबियां लें
-const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
 
 export default function VideoCall({ user, onLogout }) {
   const [searching, setSearching] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [partnerInfo, setPartnerInfo] = useState(null);
   const [translatedText, setTranslatedText] = useState('');
-  const [adTrigger, setAdTrigger] = useState(0); // एड्स रोटेशन के लिए
+
+  // Vercel से आपकी API Key को यहाँ एक्सेस करेंगे
+  const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 
   const localVideoRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  // 1. Google Ads रोटेशन (हर 40 सेकंड में)
   useEffect(() => {
-    const adInterval = setInterval(() => {
-      setAdTrigger(prev => prev + 1);
-    }, 40000);
-    return () => clearInterval(adInterval);
+    // कैमरा एक्सेस
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+      })
+      .catch((err) => console.error("कैमरा एक्सेस नहीं मिला:", err));
+
+    setupAIVoiceTranslator();
+
+    return () => {
+      if (recognitionRef.current) recognitionRef.current.stop();
+    };
   }, []);
 
-  // 2. AI मॉडरेशन (गंदगी रोकने के लिए)
-  const checkSafety = async (text) => {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(`Check if this text contains abusive, sexual, or harmful content. Answer only "YES" or "NO": "${text}"`);
-    return result.response.text().trim() === "YES";
-  };
+  const setupAIVoiceTranslator = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.lang = 'hi-IN'; // अपनी जरूरत के अनुसार बदलें
 
-  // 3. AI ट्रांसलेशन लॉजिक
-  const translateAndSpeak = async (text) => {
-    const isHarmful = await checkSafety(text);
-    if (isHarmful) {
-      setTranslatedText("⚠️ सुरक्षा नियम: गलत भाषा इस्तेमाल न करें।");
-      return;
+      rec.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript;
+        // यहाँ API Key का इस्तेमाल करके Gemini से अनुवाद कर सकते हैं
+        console.log("Gemini API Key Check:", GEMINI_API_KEY ? "Loaded" : "Missing");
+        translateAndSpeak(transcript);
+      };
+      recognitionRef.current = rec;
     }
-
-    try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = `Translate to ${user.language === 'hi' ? 'Hindi' : 'English'}: "${text}"`;
-      const result = await model.generateContent(prompt);
-      setTranslatedText(result.response.text());
-    } catch (err) { console.error(err); }
   };
 
-  // 4. कॉल कंट्रोल्स
+  const translateAndSpeak = (text) => {
+    // यहाँ अपना अनुवाद लॉजिक रखें
+    const fakeTranslation = "अनुवादित: " + text;
+    setTranslatedText(fakeTranslation);
+    const utterance = new SpeechSynthesisUtterance(fakeTranslation);
+    window.speechSynthesis.speak(utterance);
+  };
+
   const handleNextCall = () => {
     setSearching(true);
     setConnected(false);
-    setTimeout(() => { setSearching(false); setConnected(true); }, 2000);
+    
+    // नकली कॉल कनेक्शन (सिमुलेशन)
+    setTimeout(() => {
+      setSearching(false);
+      setConnected(true);
+      setPartnerInfo({ name: "Stranger", country: "Global" });
+      if (recognitionRef.current) recognitionRef.current.start();
+    }, 2000);
   };
-
-  const handleCutCall = () => { setConnected(false); };
 
   return (
     <div className="video-container">
-      {/* वीडियो और कंट्रोल्स यहाँ रखें... */}
-      <div className="controls">
-        {!connected ? (
-          <button onClick={handleNextCall}>{searching ? "ढूंढ रहा हूँ..." : "START CHAT"}</button>
-        ) : (
-          <>
-            <button onClick={handleCutCall}>कॉल कट (STOP)</button>
-            <button onClick={handleNextCall}>अगला (NEXT)</button>
-          </>
-        )}
+      {/* टॉप बार */}
+      <div className="top-bar">
+        <div className="user-profile">
+          <span>{user.name}</span>
+        </div>
+        <button className="logout-btn" onClick={onLogout}>लॉगआउट</button>
       </div>
-      
-      {/* विज्ञापन रोटेशन */}
-      <div className="ad-container">
-        Google Ads Slot #{adTrigger} - विज्ञापन बदल रहा है...
+
+      {/* वीडियो बॉक्स */}
+      <div className="video-grid">
+        <video ref={localVideoRef} autoPlay playsInline muted className="video-box" />
+        <div className="video-box remote-box">
+          {searching ? "खोज रहे हैं..." : connected ? "बातचीत जारी है" : "START दबाएं"}
+        </div>
+      </div>
+
+      {/* ट्रांसलेशन बार */}
+      {connected && (
+        <div className="ai-translation-bar">
+          🤖 AI ट्रांसलेशन: <strong>{translatedText}</strong>
+        </div>
+      )}
+
+      {/* कंट्रोल्स */}
+      <div className="controls">
+        {!connected && !searching ? (
+          <button className="btn start-btn" onClick={handleNextCall}>START CHAT</button>
+        ) : (
+          <button className="btn next-btn" onClick={handleNextCall}>अगला (NEXT)</button>
+        )}
       </div>
     </div>
   );
