@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Peer from 'peerjs';
 import './VideoCall.css';
 
 export default function VideoCall({ user, onLogout }) {
@@ -12,40 +11,43 @@ export default function VideoCall({ user, onLogout }) {
   const peerInstance = useRef(null);
   const recognitionRef = useRef(null);
 
-  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
   useEffect(() => {
-    // 1. WebRTC (PeerJS) Setup
-    const peer = new Peer(undefined, {
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
-      }
-    });
-    peerInstance.current = peer;
-
-    // 2. कैमरा और माइक एक्सेस
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then((stream) => {
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+    // PeerJS को बिना इंस्टॉल किए सीधे लोड करने का तरीका
+    const script = document.createElement('script');
+    script.src = "https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js";
+    script.onload = () => {
+      const peer = new window.Peer(undefined, {
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ]
+        }
       });
+      peerInstance.current = peer;
 
-    // कॉल आने पर जवाब देना
-    peer.on('call', (call) => {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-        call.answer(stream);
-        call.on('stream', (remoteStream) => {
-          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+      // कैमरा और माइक एक्सेस
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then((stream) => {
+          if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        });
+
+      // कॉल आने पर जवाब देना
+      peer.on('call', (call) => {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+          call.answer(stream);
+          call.on('stream', (remoteStream) => {
+            if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+          });
         });
       });
-    });
+    };
+    document.head.appendChild(script);
 
     setupAIVoiceTranslator();
 
     return () => {
-      peer.destroy();
+      if (peerInstance.current) peerInstance.current.destroy();
       if (recognitionRef.current) recognitionRef.current.stop();
     };
   }, []);
@@ -75,7 +77,6 @@ export default function VideoCall({ user, onLogout }) {
     setSearching(true);
     setConnected(false);
     
-    // यहाँ आप PeerJS की कॉल लगा सकते हैं
     setTimeout(() => {
       setSearching(false);
       setConnected(true);
