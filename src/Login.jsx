@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import './Login.css';
 
-const SUPABASE_URL = "https://wglrckiaxcztqvqccnxl.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_41h96FI0K1HrKow3Rr1p1A_bMksXurh";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// 🔑 वर्सेल (Vercel) से चाबियां लेने का सुरक्षित तरीका
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL, 
+  process.env.REACT_APP_SUPABASE_ANON_KEY
+);
 
 export default function Login({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -16,33 +18,13 @@ export default function Login({ onLoginSuccess }) {
       .then((res) => res.json())
       .then((data) => {
         setUserCountry(data.country_name || 'Unknown');
-        if (data.country_code === 'IN') {
-          setDetectedLang('hi');
-        } else {
-          setDetectedLang(navigator.language.split('-')[0] || 'en');
-        }
+        setDetectedLang(data.country_code === 'IN' ? 'hi' : 'en');
       })
       .catch((err) => {
         console.error("Country detection failed:", err);
         setUserCountry('Global');
       });
-    checkUser();
   }, []);
-
-  const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const user = session.user;
-      onLoginSuccess({
-        uid: user.id,
-        name: user.user_metadata.full_name || "Supabase User",
-        email: user.email,
-        photo: user.user_metadata.avatar_url || "https://via.placeholder.com/150",
-        country: userCountry,
-        language: detectedLang
-      });
-    }
-  };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -53,7 +35,6 @@ export default function Login({ onLoginSuccess }) {
       });
       if (error) throw error;
     } catch (error) {
-      console.error("Supabase Login Error:", error.message);
       alert("लॉगिन में दिक्कत आई: " + error.message);
       setLoading(false);
     }
@@ -62,8 +43,8 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div className="login-container">
       <div className="login-card">
-        {/* यहाँ आपका नया कर्सिव लोगो चमकेगा */}
-        <h1 className="cursive-logo">Global Chat</h1>
+        {/* 🌟 यहाँ आपका प्रीमियम 'रंगमंच' नाम चमकेगा */}
+        <h1 className="premium-logo">Rang Manch</h1>
         <p className="tagline">दुनियाभर के अनजान लोगों से अपनी भाषा में बात करें</p>
         
         <div className="country-badge">
