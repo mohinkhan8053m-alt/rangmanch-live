@@ -9,26 +9,35 @@ export default function VideoCall({ user, onLogout }) {
   const [isRoomActive, setIsRoomActive] = useState(false);
   const [translatedText, setTranslatedText] = useState('');
 
-  // 1. टोकन लाना (कनेक्शन के लिए जरूरी)
+  // 1. टोकन लाना (अब यह आपके नए /api/token से डेटा लाएगा)
   useEffect(() => {
-    (async () => {
-      const resp = await fetch(`/api/get-participant-token?room=omegle-clone&username=${user?.name}`);
-      const data = await resp.json();
-      setToken(data.token);
-    })();
-  }, [user]);
+    if (isRoomActive && user?.name) {
+      (async () => {
+        try {
+          const resp = await fetch(`/api/token?room=public-chat&username=${encodeURIComponent(user.name)}`);
+          const data = await resp.json();
+          setToken(data.token);
+        } catch (err) {
+          console.error("Token fetch failed", err);
+        }
+      })();
+    }
+  }, [isRoomActive, user]);
 
-  // 2. AI Translator (आपका फीचर)
+  // 2. AI Translator फीचर
   const translateAndSpeak = (text) => {
     const translation = "अनुवादित: " + text;
     setTranslatedText(translation);
     window.speechSynthesis.speak(new SpeechSynthesisUtterance(translation));
   };
 
-  // 3. AI Security (गंदगी रोकने के लिए)
+  // 3. AI Security फीचर
   const handleSecurityCheck = (text) => {
     const badWords = ["gali1", "gali2"];
-    if (badWords.some(w => text.includes(w))) handleEndCall();
+    if (badWords.some(w => text.toLowerCase().includes(w.toLowerCase()))) {
+      alert("अवैध गतिविधि! आपको ब्लॉक किया गया है।");
+      handleEndCall();
+    }
   };
 
   // 4. कॉल कट करने का ऑप्शन
@@ -37,8 +46,10 @@ export default function VideoCall({ user, onLogout }) {
     setSearching(false);
   };
 
+  // 5. कॉल स्टार्ट/नेक्स्ट
   const handleNextCall = () => {
     setSearching(true);
+    // ओमेगल स्टाइल 2 सेकंड डिले
     setTimeout(() => {
       setSearching(false);
       setIsRoomActive(true);
@@ -47,36 +58,43 @@ export default function VideoCall({ user, onLogout }) {
 
   return (
     <div className="video-container">
-      {/* टॉप बार और लॉगआउट */}
+      {/* टॉप बार */}
       <div className="top-bar">
         <div className="user-profile"><span>{user?.name || "User"}</span></div>
         <button className="logout-btn" onClick={onLogout}>लॉगआउट</button>
       </div>
 
-      {/* वीडियो ग्रिड (इंजन बदल दिया गया है) */}
+      {/* वीडियो ग्रिड */}
       <div className="video-grid">
-        {isRoomActive ? (
-          <LiveKitRoom video={true} audio={true} token={token} serverUrl={import.meta.env.VITE_LIVEKIT_URL}>
+        {isRoomActive && token ? (
+          <LiveKitRoom 
+            video={true} 
+            audio={true} 
+            token={token} 
+            serverUrl={import.meta.env.VITE_LIVEKIT_URL}
+          >
             <VideoConference />
             <RoomAudioRenderer />
           </LiveKitRoom>
         ) : (
-          <div className="video-box">तैयार रहें...</div>
+          <div className="video-box status-message">
+            {searching ? "खोज रहे हैं..." : "तैयार रहें... START दबाएं"}
+          </div>
         )}
       </div>
 
-      {/* AI Translation और Security का एरिया */}
+      {/* AI Translation और Security Area */}
       {isRoomActive && <div className="ai-translation-bar">🤖 AI: {translatedText}</div>}
 
-      {/* गूगल एडसेंस का ऑप्शन */}
-      <div className="ads-container">
+      {/* गूगल एडसेंस */}
+      <div className="ad-container">
         <ins className="adsbygoogle" style={{display: 'block'}} data-ad-client="ca-pub-XXXXXX" data-ad-slot="XXXXXX"></ins>
       </div>
 
-      {/* 5. कॉल मिलाने और काटने के बटन */}
+      {/* कंट्रोल बटन */}
       <div className="controls">
-        <button className="btn" onClick={handleNextCall}>{searching ? "खोज रहे..." : "START / NEXT"}</button>
-        <button className="btn" onClick={handleEndCall}>कॉल कट करें</button>
+        <button className="btn start-btn" onClick={handleNextCall}>{searching ? "खोज रहे..." : "START / NEXT"}</button>
+        <button className="btn cut-btn" onClick={handleEndCall}>कॉल कट करें</button>
       </div>
     </div>
   );
