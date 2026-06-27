@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { LiveKitRoom, VideoConference, RoomAudioRenderer } from '@livekit/components-react';
+import { LiveKitRoom, ParticipantTile, useParticipants, RoomAudioRenderer } from '@livekit/components-react';
 import '@livekit/components-styles';
 import './VideoCall.css';
+
+// ओमेगल जैसा लेआउट बनाने के लिए कंपोनेंट
+function ParticipantList() {
+  const participants = useParticipants();
+  return (
+    <div className="video-grid-inner">
+      {participants.map((participant) => (
+        <div key={participant.sid} className="video-box">
+          <ParticipantTile participant={participant} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function VideoCall({ user, onLogout }) {
   const [token, setToken] = useState("");
@@ -9,7 +23,7 @@ export default function VideoCall({ user, onLogout }) {
   const [isRoomActive, setIsRoomActive] = useState(false);
   const [translatedText, setTranslatedText] = useState('');
 
-  // 1. टोकन लाना (यह आपके नए /api/token से डेटा लाएगा)
+  // 1. टोकन लाना
   useEffect(() => {
     if (isRoomActive && user?.name) {
       (async () => {
@@ -40,7 +54,7 @@ export default function VideoCall({ user, onLogout }) {
     }
   };
 
-  // 4. कॉल कट करने का ऑप्शन
+  // 4. कॉल कट करना
   const handleEndCall = () => {
     setIsRoomActive(false);
     setSearching(false);
@@ -49,7 +63,6 @@ export default function VideoCall({ user, onLogout }) {
   // 5. कॉल स्टार्ट/नेक्स्ट
   const handleNextCall = () => {
     setSearching(true);
-    // ओमेगल स्टाइल 2 सेकंड डिले
     setTimeout(() => {
       setSearching(false);
       setIsRoomActive(true);
@@ -73,7 +86,7 @@ export default function VideoCall({ user, onLogout }) {
             token={token} 
             serverUrl={import.meta.env.VITE_LIVEKIT_URL}
           >
-            <VideoConference />
+            <ParticipantList />
             <RoomAudioRenderer />
           </LiveKitRoom>
         ) : (
