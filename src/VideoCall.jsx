@@ -9,7 +9,7 @@ export default function VideoCall({ user, onLogout }) {
   const [isRoomActive, setIsRoomActive] = useState(false);
   const [translatedText, setTranslatedText] = useState('');
 
-  // 1. टोकन लाना (अब यह आपके नए /api/token से डेटा लाएगा)
+  // 1. टोकन लाना (यह आपके नए /api/token से डेटा लाएगा)
   useEffect(() => {
     if (isRoomActive && user?.name) {
       (async () => {
